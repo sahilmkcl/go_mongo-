@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -32,15 +33,29 @@ func close(client *mongo.Client, ctx context.Context, cancel context.CancelFunc)
 
 func CreateUser(user model.User) {
 	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
-	checkError(err)
+	CheckError(err)
 	defer close(client, context, cancel)
 	collection := client.Database("mongodatabase").Collection("users")
 	_, err = collection.InsertOne(context, user)
-	checkError(err)
+	CheckError(err)
 }
 
-func checkError(er error) {
+func CheckError(er error) {
 	if er != nil {
 		log.Fatal(er)
 	}
+}
+
+func GetUser() []model.User {
+	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
+	CheckError(err)
+	defer close(client, context, cancel)
+	collection := client.Database("mongodatabase").Collection("users")
+	res, err := collection.Find(context, bson.D{})
+	CheckError(err)
+	var users []model.User
+	if err = res.All(context, &users); err != nil {
+		log.Fatal(err)
+	}
+	return users
 }
