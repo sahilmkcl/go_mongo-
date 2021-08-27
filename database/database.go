@@ -11,6 +11,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var db = "omkar"
+var col = "users"
+
 func createConnection(url string) (*mongo.Client, context.Context, context.CancelFunc, error) {
 	clientOptions := options.Client().ApplyURI(url)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -35,7 +38,7 @@ func CreateUser(user model.User) {
 	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
 	CheckError(err)
 	defer close(client, context, cancel)
-	collection := client.Database("mongodatabase").Collection("users")
+	collection := client.Database(db).Collection(col)
 	_, err = collection.InsertOne(context, user)
 	CheckError(err)
 }
@@ -50,7 +53,7 @@ func GetUser() []model.User {
 	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
 	CheckError(err)
 	defer close(client, context, cancel)
-	collection := client.Database("mongodatabase").Collection("users")
+	collection := client.Database(db).Collection(col)
 	res, err := collection.Find(context, bson.D{})
 	CheckError(err)
 	var users []model.User
@@ -58,4 +61,17 @@ func GetUser() []model.User {
 		log.Fatal(err)
 	}
 	return users
+}
+
+func FindUser(name string) (model.User, error) {
+	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
+	CheckError(err)
+	defer close(client, context, cancel)
+	collection := client.Database(db).Collection(col)
+	var user model.User
+	err = collection.FindOne(context, bson.M{"name": name}).Decode(&user)
+	if err != nil {
+		return model.User{}, err
+	}
+	return user, nil
 }
