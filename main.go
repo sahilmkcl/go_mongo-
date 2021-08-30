@@ -1,6 +1,7 @@
 package main
 
 func main() {
-	r := registerRoutes()
+	var saveToken = make(map[string]string)
+	r := registerRoutes(saveToken)
 	r.Run(":8080")
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -74,4 +75,20 @@ func FindUser(name string) (model.User, error) {
 		return model.User{}, err
 	}
 	return user, nil
+}
+
+func UpdateUser(update model.Update) error {
+	client, context, cancel, err := createConnection("mongodb://localhost:27017/")
+	CheckError(err)
+	defer close(client, context, cancel)
+	log.Println(update)
+	collection := client.Database(db).Collection(col)
+	_, err = collection.UpdateOne(context, bson.M{update.ToUpdate: update.OldValue}, bson.D{{"$set",
+		bson.D{primitive.E{Key: update.ToUpdate, Value: update.NewValue}}}},
+	)
+	if err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
